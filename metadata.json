@@ -1,0 +1,6 @@
+{
+  "name": "Galaxy Composite Manufacturing",
+  "description": "Ethiopia's premier fiberglass and composite manufacturing catalog featuring products, services, portfolio, location map, and secure product management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

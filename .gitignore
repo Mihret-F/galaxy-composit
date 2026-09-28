@@ -1,0 +1,11 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+data/*.json
+public/Remove Image Background - Google Gemini.html
+public/Remove Image Background - Google Gemini_files/
