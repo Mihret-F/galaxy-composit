@@ -9,3 +9,5 @@ coverage/
 data/*.json
 public/Remove Image Background - Google Gemini.html
 public/Remove Image Background - Google Gemini_files/
+
+.vercel
