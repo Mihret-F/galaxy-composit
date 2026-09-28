@@ -23,16 +23,22 @@ export const AdminInquiries: React.FC = () => {
   const [activeInquiry, setActiveInquiry] = useState<Inquiry | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
+  const [inquiryError, setInquiryError] = useState('');
 
   const fetchInquiries = async () => {
+    setInquiryError('');
     try {
       const res = await fetch('/api/admin/inquiries');
-      if (res.ok) {
-        const data = await res.json();
-        setInquiries(data.inquiries || []);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(res.status === 401
+          ? 'Admin session expired. Sign in again to view inquiries.'
+          : data.error || 'Failed to load inquiries.');
       }
+      setInquiries(data.inquiries || []);
     } catch (err) {
       console.error('Failed to fetch inquiries:', err);
+      setInquiryError(err instanceof Error ? err.message : 'Failed to load inquiries.');
     } finally {
       setLoading(false);
     }
@@ -64,14 +70,20 @@ export const AdminInquiries: React.FC = () => {
     if (!confirm('Are you sure you want to delete this inquiry?')) return;
     try {
       const res = await fetch(`/api/admin/inquiries/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setInquiries((prev) => prev.filter((i) => i.id !== id));
-        if (activeInquiry && activeInquiry.id === id) {
-          setActiveInquiry(null);
-        }
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(res.status === 401
+          ? 'Admin session expired. Sign in again to delete inquiries.'
+          : data.error || 'Failed to delete inquiry.');
       }
+      setInquiries((prev) => prev.filter((i) => i.id !== id));
+      if (activeInquiry && activeInquiry.id === id) {
+        setActiveInquiry(null);
+      }
+      setInquiryError('');
     } catch (err) {
       console.error(err);
+      setInquiryError(err instanceof Error ? err.message : 'Failed to delete inquiry.');
     }
   };
 
@@ -123,6 +135,12 @@ export const AdminInquiries: React.FC = () => {
           View customer submissions, manage message status, and reply directly via official email.
         </p>
       </div>
+
+      {inquiryError && (
+        <div className="p-3 bg-red-950/60 border border-red-800 rounded-sm text-sm text-red-200" role="alert">
+          {inquiryError}
+        </div>
+      )}
 
       {/* Controls */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-neutral-900 p-4 rounded-sm border border-neutral-800">
