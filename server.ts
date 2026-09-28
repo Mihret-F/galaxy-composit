@@ -285,18 +285,12 @@ async function initializeInquiryStorage() {
 }
 
 app.get('/api/content', (req: Request, res: Response) => {
-  if (process.env.VERCEL && !mysqlPool) {
-    res.status(503).json({ error: 'Persistent database is not configured.' });
-    return;
-  }
+  if (rejectUnavailableProductionStorage(res)) return;
   res.json({ products: productsStore, gallery: galleryStore });
 });
 
 app.put('/api/admin/products', requireAdmin, async (req: Request, res: Response) => {
-  if (process.env.VERCEL && !mysqlPool) {
-    res.status(503).json({ error: 'Persistent database is not configured. Add MYSQL_* variables in Vercel.' });
-    return;
-  }
+  if (rejectUnavailableProductionStorage(res)) return;
   if (!Array.isArray(req.body.products)) {
     res.status(400).json({ error: 'Products must be an array.' });
     return;
@@ -311,10 +305,7 @@ app.put('/api/admin/products', requireAdmin, async (req: Request, res: Response)
 });
 
 app.put('/api/admin/gallery', requireAdmin, async (req: Request, res: Response) => {
-  if (process.env.VERCEL && !mysqlPool) {
-    res.status(503).json({ error: 'Persistent database is not configured. Add MYSQL_* variables in Vercel.' });
-    return;
-  }
+  if (rejectUnavailableProductionStorage(res)) return;
   if (!Array.isArray(req.body.gallery)) {
     res.status(400).json({ error: 'Gallery must be an array.' });
     return;
@@ -327,6 +318,19 @@ app.put('/api/admin/gallery', requireAdmin, async (req: Request, res: Response) 
     res.status(500).json({ error: 'Failed to save gallery.' });
   }
 });
+
+function rejectUnavailableProductionStorage(res: Response): boolean {
+  if (!process.env.VERCEL) return false;
+  if (!mysqlPool) {
+    res.status(503).json({ error: 'Persistent MySQL storage is not configured.' });
+    return true;
+  }
+  if (storageInitializationError) {
+    res.status(503).json({ error: 'MySQL connection failed. Check the hosted MYSQL_HOST, MYSQL_PORT, and credentials in Vercel.' });
+    return true;
+  }
+  return false;
+}
 
 let companySettingsStore = {
   companyName: 'GALAXY COMPOSITE MANUFACTURING',
@@ -381,6 +385,7 @@ async function sendEmailNotification(to: string, subject: string, htmlContent: s
 // 1. Submit Contact Form Inquiry
 app.post('/api/contact', async (req: Request, res: Response) => {
   try {
+    if (rejectUnavailableProductionStorage(res)) return;
     const { firstName, lastName, email, phone, subject, product, message } = req.body;
 
     if (!firstName || !phone || !message) {
@@ -492,10 +497,12 @@ app.post('/api/admin/logout', (req: Request, res: Response) => {
 
 // 5. Admin Inquiries API
 app.get('/api/admin/inquiries', requireAdmin, (req: Request, res: Response) => {
+  if (rejectUnavailableProductionStorage(res)) return;
   res.json({ inquiries: inquiriesStore });
 });
 
 app.patch('/api/admin/inquiries/:id', requireAdmin, (req: Request, res: Response) => {
+  if (rejectUnavailableProductionStorage(res)) return;
   const { id } = req.params;
   const { status } = req.body;
   const item = inquiriesStore.find((i) => i.id === id);
@@ -510,6 +517,7 @@ app.patch('/api/admin/inquiries/:id', requireAdmin, (req: Request, res: Response
 });
 
 app.delete('/api/admin/inquiries/:id', requireAdmin, (req: Request, res: Response) => {
+  if (rejectUnavailableProductionStorage(res)) return;
   const { id } = req.params;
   inquiriesStore = inquiriesStore.filter((i) => i.id !== id);
   deleteInquiry(id)
@@ -518,6 +526,7 @@ app.delete('/api/admin/inquiries/:id', requireAdmin, (req: Request, res: Respons
 });
 
 app.post('/api/admin/inquiries/:id/reply', requireAdmin, async (req: Request, res: Response) => {
+  if (rejectUnavailableProductionStorage(res)) return;
   const { id } = req.params;
   const { replyMessage } = req.body;
   const item = inquiriesStore.find((i) => i.id === id);
@@ -577,9 +586,13 @@ app.post('/api/upload', requireAdmin, (req: Request, res: Response) => {
 
 // Start Server Mode: Vite Middleware for Dev OR Dist Static for Production
 let storageInitialization: Promise<void> | undefined;
+let storageInitializationError: unknown;
 
 async function initializeStorageOnce() {
-  storageInitialization ||= initializeInquiryStorage();
+  storageInitialization ||= initializeInquiryStorage().catch((err) => {
+    storageInitializationError = err;
+    console.error('Persistent storage initialization failed:', err);
+  });
   await storageInitialization;
 }
 
