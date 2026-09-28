@@ -180,6 +180,7 @@ async function updateInquiry(inquiry: Inquiry) {
 
 async function deleteInquiry(id: string) {
   if (!mysqlPool) {
+    inquiriesStore = inquiriesStore.filter((inquiry) => inquiry.id !== id);
     saveInquiriesToFile(inquiriesStore);
     return;
   }
@@ -288,7 +289,21 @@ async function initializeInquiryStorage() {
 
 app.get('/api/content', (req: Request, res: Response) => {
   if (rejectUnavailableProductionStorage(res)) return;
-  res.json({ products: productsStore, gallery: galleryStore });
+  if (!mysqlPool) {
+    res.json({ products: productsStore, gallery: galleryStore });
+    return;
+  }
+
+  Promise.all([
+    mysqlPool.query<mysql.RowDataPacket[]>('SELECT data FROM products'),
+    mysqlPool.query<mysql.RowDataPacket[]>('SELECT data FROM gallery_items')
+  ])
+    .then(([[productRows], [galleryRows]]) => {
+      productsStore = productRows.map((row) => typeof row.data === 'string' ? JSON.parse(row.data) : row.data);
+      galleryStore = galleryRows.map((row) => typeof row.data === 'string' ? JSON.parse(row.data) : row.data);
+      res.json({ products: productsStore, gallery: galleryStore });
+    })
+    .catch(() => res.status(503).json({ error: 'Failed to load saved products and gallery from MySQL.' }));
 });
 
 app.put('/api/admin/products', requireAdmin, async (req: Request, res: Response) => {
@@ -498,9 +513,34 @@ app.post('/api/admin/logout', (req: Request, res: Response) => {
 });
 
 // 5. Admin Inquiries API
-app.get('/api/admin/inquiries', requireAdmin, (req: Request, res: Response) => {
+app.get('/api/admin/inquiries', requireAdmin, async (req: Request, res: Response) => {
   if (rejectUnavailableProductionStorage(res)) return;
-  res.json({ inquiries: inquiriesStore });
+  if (!mysqlPool) {
+    res.json({ inquiries: inquiriesStore });
+    return;
+  }
+
+  try {
+    const [rows] = await mysqlPool.query<mysql.RowDataPacket[]>(
+      'SELECT id, first_name, last_name, email, phone, subject, product, message, status, created_at, replies FROM inquiries ORDER BY created_at DESC'
+    );
+    inquiriesStore = rows.map((row) => ({
+      id: String(row.id),
+      firstName: String(row.first_name),
+      lastName: String(row.last_name || ''),
+      email: String(row.email || ''),
+      phone: String(row.phone),
+      subject: String(row.subject),
+      product: String(row.product),
+      message: String(row.message),
+      status: row.status,
+      createdAt: new Date(row.created_at).toISOString(),
+      replies: typeof row.replies === 'string' ? JSON.parse(row.replies) : (row.replies || [])
+    }));
+    res.json({ inquiries: inquiriesStore });
+  } catch {
+    res.status(503).json({ error: 'Failed to load inquiries from MySQL.' });
+  }
 });
 
 app.patch('/api/admin/inquiries/:id', requireAdmin, (req: Request, res: Response) => {
@@ -518,13 +558,16 @@ app.patch('/api/admin/inquiries/:id', requireAdmin, (req: Request, res: Response
     .catch(() => res.status(500).json({ error: 'Failed to save inquiry status.' }));
 });
 
-app.delete('/api/admin/inquiries/:id', requireAdmin, (req: Request, res: Response) => {
+app.delete('/api/admin/inquiries/:id', requireAdmin, async (req: Request, res: Response) => {
   if (rejectUnavailableProductionStorage(res)) return;
   const { id } = req.params;
-  inquiriesStore = inquiriesStore.filter((i) => i.id !== id);
-  deleteInquiry(id)
-    .then(() => res.json({ success: true }))
-    .catch(() => res.status(500).json({ error: 'Failed to delete inquiry.' }));
+  try {
+    await deleteInquiry(id);
+    inquiriesStore = inquiriesStore.filter((i) => i.id !== id);
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: 'Failed to delete inquiry from MySQL.' });
+  }
 });
 
 app.post('/api/admin/inquiries/:id/reply', requireAdmin, async (req: Request, res: Response) => {
