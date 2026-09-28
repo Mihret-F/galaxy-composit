@@ -81,7 +81,6 @@ function saveJsonFile<T>(file: string, value: T) {
 
 let productsStore: Product[] = loadJsonFile(productsFile, []);
 let galleryStore: GalleryItem[] = loadJsonFile(galleryFile, []);
-
 const mysqlPool = process.env.MYSQL_HOST
   ? mysql.createPool({
       host: process.env.MYSQL_HOST,
@@ -90,7 +89,10 @@ const mysqlPool = process.env.MYSQL_HOST
       password: process.env.MYSQL_PASSWORD,
       database: process.env.MYSQL_DATABASE,
       waitForConnections: true,
-      connectionLimit: 10
+      connectionLimit: 10,
+      ssl: {
+        rejectUnauthorized: false
+      }
     })
   : null;
 
