@@ -18,8 +18,7 @@ app.use(cookieParser());
 
 // Server-side Environment & Secrets
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-// Fallback bcrypt hash for "galaxy2026" if ADMIN_PASSWORD_HASH environment variable is not explicitly set
-const DEFAULT_HASH = '$2a$10$I6j.f3Z4jX9.m6j1aX9fXe9Z8Y7X6W5V4U3T2S1R0Q9P8O7N6M5L'; // hash for galaxy2026
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || (process.env.VERCEL ? '' : bcrypt.hashSync('galaxy2026', 10));
 const SESSION_SECRET = process.env.SESSION_SECRET || (process.env.VERCEL ? '' : 'galaxy_composite_secret_key_2026');
 
@@ -431,7 +430,7 @@ app.post('/api/contact', async (req: Request, res: Response) => {
 
 // 2. Admin Login
 app.post('/api/admin/login', (req: Request, res: Response) => {
-  if (process.env.VERCEL && (!ADMIN_PASSWORD_HASH || !SESSION_SECRET)) {
+  if (process.env.VERCEL && ((!ADMIN_PASSWORD_HASH && !ADMIN_PASSWORD) || !SESSION_SECRET)) {
     res.status(503).json({ error: 'Admin authentication is not configured for this deployment.' });
     return;
   }
@@ -444,18 +443,12 @@ app.post('/api/admin/login', (req: Request, res: Response) => {
   }
 
   const isUserValid = username === ADMIN_USERNAME;
-  let isPassValid = false;
-
-  try {
-    if (bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)) {
-      isPassValid = true;
-    }
-  } catch (e) {
-    // Fallback direct check if bcrypt fails
-    if (password === 'galaxy2026') {
-      isPassValid = true;
-    }
-  }
+  const submittedPassword = Buffer.from(String(password));
+  const configuredPassword = Buffer.from(ADMIN_PASSWORD);
+  const isPassValid = ADMIN_PASSWORD_HASH
+    ? bcrypt.compareSync(String(password), ADMIN_PASSWORD_HASH)
+    : Boolean(ADMIN_PASSWORD) && submittedPassword.length === configuredPassword.length &&
+      crypto.timingSafeEqual(submittedPassword, configuredPassword);
 
   if (isUserValid && isPassValid) {
     // Set secure HttpOnly session cookie
