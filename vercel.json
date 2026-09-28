@@ -5,6 +5,9 @@
   "functions": {
     "api/[...path].ts": {
       "includeFiles": "dist/server.cjs"
+    },
+    "api/admin/[...path].ts": {
+      "includeFiles": "dist/server.cjs"
     }
   },
   "rewrites": [

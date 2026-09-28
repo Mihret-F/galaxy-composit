@@ -68,7 +68,7 @@ export default function App() {
   const checkAdminSession = async () => {
     setCheckingAuth(true);
     try {
-      const res = await fetch('/api/admin/check');
+      const res = await fetch('/api/admin/me');
       const data = await res.json();
       if (res.ok && data.authenticated) {
         setIsAdminAuthenticated(true);
