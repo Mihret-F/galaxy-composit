@@ -285,10 +285,18 @@ async function initializeInquiryStorage() {
 }
 
 app.get('/api/content', (req: Request, res: Response) => {
+  if (process.env.VERCEL && !mysqlPool) {
+    res.status(503).json({ error: 'Persistent database is not configured.' });
+    return;
+  }
   res.json({ products: productsStore, gallery: galleryStore });
 });
 
 app.put('/api/admin/products', requireAdmin, async (req: Request, res: Response) => {
+  if (process.env.VERCEL && !mysqlPool) {
+    res.status(503).json({ error: 'Persistent database is not configured. Add MYSQL_* variables in Vercel.' });
+    return;
+  }
   if (!Array.isArray(req.body.products)) {
     res.status(400).json({ error: 'Products must be an array.' });
     return;
@@ -303,6 +311,10 @@ app.put('/api/admin/products', requireAdmin, async (req: Request, res: Response)
 });
 
 app.put('/api/admin/gallery', requireAdmin, async (req: Request, res: Response) => {
+  if (process.env.VERCEL && !mysqlPool) {
+    res.status(503).json({ error: 'Persistent database is not configured. Add MYSQL_* variables in Vercel.' });
+    return;
+  }
   if (!Array.isArray(req.body.gallery)) {
     res.status(400).json({ error: 'Gallery must be an array.' });
     return;

@@ -38,23 +38,33 @@ export default function App() {
   }, []);
 
   const updateProducts = async (nextProducts: Product[]) => {
-    setProducts(nextProducts);
-    const response = await fetch('/api/admin/products', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ products: nextProducts })
-    });
-    if (!response.ok) throw new Error('Failed to save products.');
+    try {
+      const response = await fetch('/api/admin/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: nextProducts })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to save products.');
+      setProducts(nextProducts);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to save products.');
+    }
   };
 
   const updateGallery = async (nextGallery: GalleryItem[]) => {
-    setGalleryItems(nextGallery);
-    const response = await fetch('/api/admin/gallery', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ gallery: nextGallery })
-    });
-    if (!response.ok) throw new Error('Failed to save gallery.');
+    try {
+      const response = await fetch('/api/admin/gallery', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gallery: nextGallery })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to save gallery.');
+      setGalleryItems(nextGallery);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to save gallery.');
+    }
   };
 
   // Check URL pathname or session for admin view
