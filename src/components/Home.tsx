@@ -1,5 +1,5 @@
 import React from 'react';
-import { PageType, Product } from '../types';
+import { GalleryItem, PageType, Product } from '../types';
 import {
   COMPANY_STATS,
   CORE_PRINCIPLES,
@@ -20,12 +20,14 @@ import {
   ExternalLink,
   ChevronRight,
   Eye,
-  MessageSquare
+  MessageSquare,
+  Images
 } from 'lucide-react';
 import { getWhatsAppLink } from './WhatsAppButton';
 
 interface HomeProps {
   products: Product[];
+  galleryItems: GalleryItem[];
   setActivePage: (page: PageType) => void;
   onSelectProduct: (product: Product) => void;
   onOpenQuickQuote: () => void;
@@ -33,6 +35,7 @@ interface HomeProps {
 
 export const Home: React.FC<HomeProps> = ({
   products,
+  galleryItems,
   setActivePage,
   onSelectProduct,
   onOpenQuickQuote
@@ -272,6 +275,52 @@ export const Home: React.FC<HomeProps> = ({
                 </button>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Gallery Preview */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-neutral-200 pb-4">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600 block">
+              02. WORKSHOP & PROJECT GALLERY
+            </span>
+            <h2 className="text-3xl font-black uppercase tracking-tighter text-neutral-900 mt-1">
+              Our Work in Pictures
+            </h2>
+            <p className="text-neutral-500 text-xs mt-1">
+              Fiberglass products and sustainable agriculture projects from Galaxy Composite.
+            </p>
+          </div>
+          <button
+            onClick={() => setActivePage('gallery')}
+            className="px-5 py-2 bg-neutral-900 text-white rounded-sm text-xs font-extrabold uppercase tracking-widest hover:bg-neutral-800 transition-colors flex items-center gap-1.5 self-start md:self-auto"
+          >
+            <Images className="w-3.5 h-3.5" />
+            <span>Open Full Gallery</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
+          {galleryItems.slice(0, 6).map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActivePage('gallery')}
+              className="group relative aspect-[4/3] overflow-hidden bg-neutral-100 border border-neutral-200 text-left"
+              aria-label={`Open gallery: ${item.title}`}
+            >
+              <img
+                src={item.image}
+                alt={item.title}
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <span className="absolute inset-x-0 bottom-0 bg-neutral-950/75 px-3 py-2 text-[10px] md:text-xs font-bold uppercase text-white">
+                {item.title}
+              </span>
+            </button>
           ))}
         </div>
       </section>

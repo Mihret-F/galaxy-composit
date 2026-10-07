@@ -179,6 +179,7 @@ export default function App() {
         {activePage === 'home' && (
           <Home
             products={products}
+            galleryItems={galleryItems}
             setActivePage={setActivePage}
             onSelectProduct={(p) => setSelectedProduct(p)}
             onOpenQuickQuote={() => {
