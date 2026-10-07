@@ -402,6 +402,10 @@ async function sendTelegramQuoteNotification(inquiry: Inquiry) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!botToken || !chatId) {
+    console.error('Telegram quote notifications are not configured.', {
+      hasBotToken: Boolean(botToken),
+      hasChatId: Boolean(chatId)
+    });
     throw new Error('Telegram quote notifications are not configured.');
   }
 
@@ -415,19 +419,25 @@ async function sendTelegramQuoteNotification(inquiry: Inquiry) {
     `Received: ${inquiry.createdAt}`
   ].join('\n');
 
+  let response: globalThis.Response;
   try {
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text }),
       signal: AbortSignal.timeout(8000)
     });
-    if (!response.ok) {
-      console.error('Telegram quote notification failed with status:', response.status);
-      throw new Error('Telegram did not accept the quote request.');
-    }
-  } catch {
-    console.error('Telegram quote notification failed.');
+  } catch (err) {
+    console.error('Telegram API request failed:', err instanceof Error ? err.name : 'Unknown error');
+    throw new Error('The quote request could not be sent to Telegram.');
+  }
+
+  const result = await response.json().catch(() => null);
+  if (!response.ok || result?.ok !== true) {
+    console.error('Telegram rejected the quote notification:', {
+      status: response.status,
+      description: typeof result?.description === 'string' ? result.description : 'No error details returned'
+    });
     throw new Error('The quote request could not be sent to Telegram.');
   }
 }
@@ -469,7 +479,8 @@ app.post('/api/contact', async (req: Request, res: Response) => {
       try {
         await sendTelegramQuoteNotification(newInquiry);
         res.json({ success: true, message: 'Quote request sent successfully.' });
-      } catch {
+      } catch (err) {
+        console.error('Quote notification failed:', err instanceof Error ? err.message : 'Unknown error');
         res.status(503).json({ error: 'Could not send the quote request. Please try again later.' });
       }
       return;
