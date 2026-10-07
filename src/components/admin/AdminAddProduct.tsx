@@ -26,19 +26,41 @@ export const AdminAddProduct: React.FC<AdminAddProductProps> = ({ onAddProduct, 
   const [videoUrl, setVideoUrl] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        setImage(reader.result);
-      }
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, 1280 / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Image processing is unavailable.');
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+
+      const compressedImage = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, 'image/webp', 0.78);
+      });
+      if (!compressedImage) throw new Error('Could not compress this image.');
+
+      const imageData = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => typeof reader.result === 'string'
+          ? resolve(reader.result)
+          : reject(new Error('Could not read this image.'));
+        reader.onerror = () => reject(reader.error || new Error('Could not read this image.'));
+        reader.readAsDataURL(compressedImage);
+      });
+      setImage(imageData);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not process this image.');
+    } finally {
       setUploading(false);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = (isDraft = false) => {

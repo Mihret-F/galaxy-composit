@@ -17,38 +17,81 @@ import { AdminLogin } from './components/admin/AdminLogin';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { WhatsAppButton } from './components/WhatsAppButton';
 
+const LOCAL_PRODUCTS_KEY = 'galaxy-composite-products';
+
+function loadLocalProducts(): Product[] | null {
+  try {
+    const stored = window.localStorage.getItem(LOCAL_PRODUCTS_KEY);
+    if (!stored) return null;
+    const parsed: unknown = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed as Product[] : null;
+  } catch (err) {
+    console.warn('Could not read locally saved products:', err);
+    return null;
+  }
+}
+
 export default function App() {
   const [activePage, setActivePage] = useState<PageType | 'admin'>('home');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [checkingAuth, setCheckingAuth] = useState<boolean>(false);
 
   // Load products with localStorage fallback & sync
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>(() => loadLocalProducts() ?? INITIAL_PRODUCTS);
 
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(GALLERY_ITEMS);
 
   useEffect(() => {
     fetch('/api/content')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('Could not load server products.');
+        return res.json();
+      })
       .then((data) => {
-        if (Array.isArray(data.products)) setProducts(data.products);
+        if (loadLocalProducts() === null && Array.isArray(data.products)) {
+          setProducts(data.products);
+          try {
+            window.localStorage.setItem(LOCAL_PRODUCTS_KEY, JSON.stringify(data.products));
+          } catch (err) {
+            console.warn('Could not cache server products in this browser:', err);
+          }
+        }
         if (Array.isArray(data.gallery) && data.gallery.length > 0) setGalleryItems(data.gallery);
       })
       .catch((err) => console.warn('Could not load saved content:', err));
   }, []);
 
   const updateProducts = async (nextProducts: Product[]) => {
+    let savedLocally = false;
+    try {
+      window.localStorage.setItem(LOCAL_PRODUCTS_KEY, JSON.stringify(nextProducts));
+      savedLocally = true;
+    } catch (err) {
+      console.warn('Could not save local product fallback:', err);
+    }
+
+    setProducts(nextProducts);
     try {
       const response = await fetch('/api/admin/products', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ products: nextProducts })
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to save products.');
-      setProducts(nextProducts);
+      const data = await response.json().catch(() => null);
+      if (response.ok) {
+        window.localStorage.removeItem(LOCAL_PRODUCTS_KEY);
+        alert('Products saved to the website for all visitors.');
+        return;
+      }
+      console.warn('Could not save products to the database:', data?.error || response.status);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save products.');
+      console.warn('Could not reach the product storage API:', err);
+    }
+
+    if (savedLocally) {
+      alert('Products saved in this browser only. Other visitors and devices will not see them without a working database.');
+    } else {
+      alert('Could not save products. The database is unavailable and this browser has no space to store them.');
     }
   };
 
