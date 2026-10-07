@@ -398,6 +398,36 @@ async function sendEmailNotification(to: string, subject: string, htmlContent: s
   }
 }
 
+async function sendTelegramQuoteNotification(inquiry: Inquiry) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!botToken || !chatId) return;
+
+  const text = [
+    'New quote request',
+    `Name: ${inquiry.firstName} ${inquiry.lastName}`.trim(),
+    `Phone: ${inquiry.phone}`,
+    `Email: ${inquiry.email || 'Not provided'}`,
+    `Product: ${inquiry.product}`,
+    `Details: ${inquiry.message || 'Not provided'}`,
+    `Received: ${inquiry.createdAt}`
+  ].join('\n');
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text }),
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) {
+      console.error('Telegram quote notification failed with status:', response.status);
+    }
+  } catch (err) {
+    console.error('Telegram quote notification failed:', err);
+  }
+}
+
 // ================= API ROUTES =================
 
 // 1. Submit Contact Form Inquiry
@@ -426,6 +456,10 @@ app.post('/api/contact', async (req: Request, res: Response) => {
 
     inquiriesStore.unshift(newInquiry);
     await insertInquiry(newInquiry);
+
+    if (newInquiry.subject.startsWith('Quote Request for ')) {
+      await sendTelegramQuoteNotification(newInquiry);
+    }
 
     // Email Notification to Admin
     const adminEmailContent = `

@@ -39,6 +39,8 @@ CREATE DATABASE galaxy_composite;
 
 The server automatically creates the `inquiries` table and imports existing local inquiries the first time it connects. New requests, status changes, deletions, and replies are then saved in MySQL. If the MySQL variables are not configured, the app uses the local `data/inquiries.json` fallback.
 
+Quote requests can also be sent to a Telegram recipient or group. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as server-side environment variables. Start the bot from the recipient account (or add it to the destination group) before enabling notifications. Keep the bot token secret; never put it in frontend code or commit it to Git. Telegram delivery is best-effort and does not prevent a quote from being saved.
+
 ## Deploy to Vercel
 
 Import the GitHub repository into Vercel. The Vercel API function serves the Express API, while Vite builds the frontend into `dist`.
