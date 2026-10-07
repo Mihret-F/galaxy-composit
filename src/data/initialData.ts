@@ -151,7 +151,114 @@ export const SERVICES: Service[] = [
   }
 ];
 
-export const GALLERY_ITEMS: GalleryItem[] = [];
+const HYDROPONIC_FODDER_DESCRIPTION = "Galaxy Composite Manufacturing's Solar Hydroponic Fodder Machine provides fresh green livestock feed throughout the year using solar energy and minimal water. Designed for drought-affected communities, it reduces fodder scarcity, saves farmland, and supports healthier livestock. Through product sales and rental services, the innovation promotes sustainable agriculture, improves farmer livelihoods, and strengthens food security in Ethiopia.";
+
+export const GALLERY_ITEMS: GalleryItem[] = [
+  {
+    id: 'gallery-fiberglass-01',
+    title: 'Fiberglass Water Dispensers',
+    category: 'General',
+    filename: '1.jpg',
+    image: '/1.jpg',
+    caption: 'A matching set of durable fiberglass water dispenser units.'
+  },
+  {
+    id: 'gallery-fiberglass-02',
+    title: 'Fiberglass Water Tank',
+    category: 'General',
+    filename: '2.jpg',
+    image: '/2.jpg',
+    caption: 'A blue fiberglass tank made for practical water storage.'
+  },
+  {
+    id: 'gallery-fiberglass-03',
+    title: 'Fiberglass Utility Box',
+    category: 'General',
+    filename: '3.jpg',
+    image: '/3.jpg',
+    caption: 'A sturdy white fiberglass utility enclosure.'
+  },
+  {
+    id: 'gallery-fiberglass-04',
+    title: 'Soccer Ball Fiberglass Planter',
+    category: 'Pots',
+    filename: '4.jpg',
+    image: '/4.jpg',
+    caption: 'A decorative soccer ball planter fabricated from fiberglass.'
+  },
+  {
+    id: 'gallery-fiberglass-05',
+    title: 'Custom Fiberglass Panel Structure',
+    category: 'Projects',
+    filename: '5.jpg',
+    image: '/5.jpg',
+    caption: 'A large custom fiberglass structure shown during fabrication.'
+  },
+  {
+    id: 'gallery-fiberglass-06',
+    title: 'Fiberglass Water Dispensers',
+    category: 'General',
+    filename: 'photo_2026-09-26_09-30-59.jpg',
+    image: '/photo_2026-09-26_09-30-59.jpg',
+    caption: 'A finished set of fiberglass water dispensers in the workshop.'
+  },
+  {
+    id: 'gallery-fiberglass-07',
+    title: 'Outdoor Fiberglass Utility Tank',
+    category: 'General',
+    filename: 'photo_2026-09-26_09-31-04.jpg',
+    image: '/photo_2026-09-26_09-31-04.jpg',
+    caption: 'A custom white fiberglass tank photographed outdoors.'
+  },
+  {
+    id: 'gallery-fiberglass-08',
+    title: 'Soccer Ball Fiberglass Planter',
+    category: 'Pots',
+    filename: 'photo_2026-09-26_09-31-09.jpg',
+    image: '/photo_2026-09-26_09-31-09.jpg',
+    caption: 'A soccer ball planter shown after fabrication.'
+  },
+  {
+    id: 'gallery-fiberglass-09',
+    title: 'Custom Fiberglass Trough',
+    category: 'Projects',
+    filename: 'photo_2026-09-26_09-31-14.jpg',
+    image: '/photo_2026-09-26_09-31-14.jpg',
+    caption: 'A reinforced fiberglass trough made for a custom project.'
+  },
+  {
+    id: 'gallery-fiberglass-10',
+    title: 'Blue Fiberglass Water Tank',
+    category: 'General',
+    filename: 'photo_2026-09-26_09-31-18.jpg',
+    image: '/photo_2026-09-26_09-31-18.jpg',
+    caption: 'A blue fiberglass water tank shown in the workshop.'
+  },
+  {
+    id: 'gallery-hydroponic-fodder-11',
+    title: 'Hydroponic Fodder',
+    category: 'Projects',
+    filename: '11.jpg',
+    image: '/11.jpg',
+    caption: HYDROPONIC_FODDER_DESCRIPTION
+  },
+  {
+    id: 'gallery-hydroponic-fodder-12',
+    title: 'Hydroponic Fodder',
+    category: 'Projects',
+    filename: '12.jpg',
+    image: '/12.jpg',
+    caption: HYDROPONIC_FODDER_DESCRIPTION
+  },
+  {
+    id: 'gallery-hydroponic-fodder-13',
+    title: 'Hydroponic Fodder',
+    category: 'Projects',
+    filename: '13.jpg',
+    image: '/13.jpg',
+    caption: HYDROPONIC_FODDER_DESCRIPTION
+  }
+];
 
 export const FEATURED_PROJECTS: Project[] = [];
 

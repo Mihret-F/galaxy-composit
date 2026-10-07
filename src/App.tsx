@@ -32,7 +32,7 @@ export default function App() {
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data.products)) setProducts(data.products);
-        if (Array.isArray(data.gallery)) setGalleryItems(data.gallery);
+        if (Array.isArray(data.gallery) && data.gallery.length > 0) setGalleryItems(data.gallery);
       })
       .catch((err) => console.warn('Could not load saved content:', err));
   }, []);

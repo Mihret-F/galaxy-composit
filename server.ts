@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import mysql from 'mysql2/promise';
 import { createServer as createViteServer } from 'vite';
+import { GALLERY_ITEMS } from './src/data/initialData';
 import type { GalleryItem, Product } from './src/types';
 
 const app = express();
@@ -80,7 +81,7 @@ function saveJsonFile<T>(file: string, value: T) {
 }
 
 let productsStore: Product[] = loadJsonFile(productsFile, []);
-let galleryStore: GalleryItem[] = loadJsonFile(galleryFile, []);
+let galleryStore: GalleryItem[] = loadJsonFile(galleryFile, GALLERY_ITEMS);
 const mysqlPool = process.env.MYSQL_HOST
   ? mysql.createPool({
       host: process.env.MYSQL_HOST,

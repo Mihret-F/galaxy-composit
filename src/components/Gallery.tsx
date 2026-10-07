@@ -31,7 +31,7 @@ export const Gallery: React.FC<GalleryProps> = ({ items }) => {
             Our Work <span className="text-sky-600">in Action</span>
           </h1>
           <p className="text-neutral-400 text-xs md:text-sm leading-relaxed">
-            Click any image to view full-size high-resolution fiberglass fabrication photos.
+            Explore our fiberglass products and solar-powered hydroponic fodder projects.
           </p>
         </div>
       </section>
