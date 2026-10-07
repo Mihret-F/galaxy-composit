@@ -21,7 +21,7 @@ View your app in AI Studio: https://ai.studio/apps/11e67534-aebe-480a-9aa3-018e3
 
 ## MySQL inquiry storage
 
-Quote requests and contact submissions are stored in MySQL when these variables are set in `.env`:
+Contact submissions are stored in MySQL when these variables are set in `.env`. Quote form submissions are sent directly to Telegram and are not stored in MySQL.
 
 ```env
 MYSQL_HOST=127.0.0.1
@@ -39,7 +39,7 @@ CREATE DATABASE galaxy_composite;
 
 The server automatically creates the `inquiries` table and imports existing local inquiries the first time it connects. New requests, status changes, deletions, and replies are then saved in MySQL. If the MySQL variables are not configured, the app uses the local `data/inquiries.json` fallback.
 
-Quote requests can also be sent to a Telegram recipient or group. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as server-side environment variables. Start the bot from the recipient account (or add it to the destination group) before enabling notifications. Keep the bot token secret; never put it in frontend code or commit it to Git. Telegram delivery is best-effort and does not prevent a quote from being saved.
+Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as server-side environment variables for quote notifications. Start the bot from the recipient account (or add it to the destination group) before enabling notifications. Keep the bot token secret; never put it in frontend code or commit it to Git. Quote submissions fail with an error if Telegram delivery fails.
 
 ## Deploy to Vercel
 

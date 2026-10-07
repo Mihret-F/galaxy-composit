@@ -48,12 +48,12 @@ export const QuickQuoteModal: React.FC<QuickQuoteModalProps> = ({
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(data?.error || 'The quote request could not be saved.');
+        throw new Error(data?.error || 'The quote request could not be sent.');
       }
       setSent(true);
     } catch (err) {
       console.error(err);
-      setSubmitError(err instanceof Error ? err.message : 'The quote request could not be saved.');
+      setSubmitError(err instanceof Error ? err.message : 'The quote request could not be sent.');
       return;
     }
     setTimeout(() => {

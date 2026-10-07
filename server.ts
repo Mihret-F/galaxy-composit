@@ -401,7 +401,9 @@ async function sendEmailNotification(to: string, subject: string, htmlContent: s
 async function sendTelegramQuoteNotification(inquiry: Inquiry) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!botToken || !chatId) return;
+  if (!botToken || !chatId) {
+    throw new Error('Telegram quote notifications are not configured.');
+  }
 
   const text = [
     'New quote request',
@@ -422,9 +424,11 @@ async function sendTelegramQuoteNotification(inquiry: Inquiry) {
     });
     if (!response.ok) {
       console.error('Telegram quote notification failed with status:', response.status);
+      throw new Error('Telegram did not accept the quote request.');
     }
-  } catch (err) {
-    console.error('Telegram quote notification failed:', err);
+  } catch {
+    console.error('Telegram quote notification failed.');
+    throw new Error('The quote request could not be sent to Telegram.');
   }
 }
 
@@ -433,11 +437,18 @@ async function sendTelegramQuoteNotification(inquiry: Inquiry) {
 // 1. Submit Contact Form Inquiry
 app.post('/api/contact', async (req: Request, res: Response) => {
   try {
-    if (rejectUnavailableProductionStorage(res)) return;
     const { firstName, lastName, email, phone, subject, product, message } = req.body;
+    const normalizedSubject = String(subject || 'General Inquiry').trim();
+    const isQuoteRequest = normalizedSubject.startsWith('Quote Request for ');
 
-    if (!firstName || !phone || !message) {
-      res.status(400).json({ error: 'First Name, Phone Number, and Message are required.' });
+    if (!isQuoteRequest && rejectUnavailableProductionStorage(res)) return;
+
+    if (!firstName || !phone || (!isQuoteRequest && !message)) {
+      res.status(400).json({
+        error: isQuoteRequest
+          ? 'First Name and Phone Number are required.'
+          : 'First Name, Phone Number, and Message are required.'
+      });
       return;
     }
 
@@ -447,19 +458,25 @@ app.post('/api/contact', async (req: Request, res: Response) => {
       lastName: String(lastName || '').trim(),
       email: String(email || '').trim(),
       phone: String(phone).trim(),
-      subject: String(subject || 'General Inquiry').trim(),
+      subject: normalizedSubject,
       product: String(product || 'General').trim(),
-      message: String(message).trim(),
+      message: String(message || '').trim(),
       status: 'NEW' as const,
       createdAt: new Date().toISOString()
     };
 
+    if (isQuoteRequest) {
+      try {
+        await sendTelegramQuoteNotification(newInquiry);
+        res.json({ success: true, message: 'Quote request sent successfully.' });
+      } catch {
+        res.status(503).json({ error: 'Could not send the quote request. Please try again later.' });
+      }
+      return;
+    }
+
     inquiriesStore.unshift(newInquiry);
     await insertInquiry(newInquiry);
-
-    if (newInquiry.subject.startsWith('Quote Request for ')) {
-      await sendTelegramQuoteNotification(newInquiry);
-    }
 
     // Email Notification to Admin
     const adminEmailContent = `
